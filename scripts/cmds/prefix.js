@@ -6,44 +6,13 @@ const { utils } = global;
 module.exports = {
   config: {
     name: "prefix",
-    version: "13.3",           
+    version: "13.9",
     author: "Hridoy",
     description: "Prefix info + working setprefix system",
     category: "Utility"
   },
 
   onStart: async function ({ message, event, api, args }) {
-
-    const prefixFile = path.join(__dirname, "prefixData.json");
-
-    if (!fs.existsSync(prefixFile)) {
-      fs.writeFileSync(prefixFile, JSON.stringify({}, null, 2));
-    }
-
-    const getPrefix = (threadID) => {
-      const data = JSON.parse(fs.readFileSync(prefixFile));
-      return data[threadID] || global.GoatBot.config.prefix;
-    };
-
-    const setPrefix = (threadID, newPrefix) => {
-      const data = JSON.parse(fs.readFileSync(prefixFile));
-      data[threadID] = newPrefix;
-      fs.writeFileSync(prefixFile, JSON.stringify(data, null, 2));
-    };
-
-    // ================= SETPREFIX =================
-    if (args && args[0] === "set") {
-      const newPrefix = args[1];
-
-      if (!newPrefix) {
-        return message.reply("❌ | Example: prefix set !");
-      }
-
-      setPrefix(event.threadID, newPrefix);
-      global.GoatBot.config.prefix = newPrefix;
-
-      return message.reply(`✅ Prefix changed successfully!\nNew Prefix: ${newPrefix}`);
-    }
 
     const prefixFile = path.join(__dirname, "prefixData.json");
 
@@ -93,8 +62,8 @@ module.exports = {
     const GROUPPREFIX = getPrefix(event.threadID);
 
     // ================= RANDOM LOADING ANIMATION =================
-    const loadingSets = [ /* তোমার আগের loadingSets এখানে আছে */ 
-       [
+    const loadingSets = [
+      [
         "𝐋𝐨𝐚𝐝𝐢𝐧𝐠 𝐏𝐫𝐞𝐟𝐢𝐱...\n▰▱▱▱▱▱▱▱▱▱ 10%",
         "𝐋𝐨𝐚𝐝𝐢𝐧𝐠 𝐏𝐫𝐞𝐟𝐢𝐱...\n▰▰▰▱▱▱▱▱▱▱ 30%",
         "𝐋𝐨𝐚𝐝𝐢𝐧𝐠 𝐏𝐫𝐞𝐟𝐢𝐱...\n▰▰▰▰▰▱▱▱▱▱ 50%",
@@ -134,7 +103,6 @@ module.exports = {
       "https://i.imgur.com/KrEez4A.gif"
     ];
 
-    // ================= RANDOM TEXT FRAME =================
     const textFrames = [
 `🌟╔═༶• 𝗣𝗥𝗘𝗙𝗜𝗫 𝗜𝗡𝗙𝗢 •༶═╗🌟
 🕒 Ping: ${ping}ms
@@ -166,15 +134,12 @@ Day: ${day}
 Bot Prefix: ${BOTPREFIX}
 Group Prefix: ${GROUPPREFIX}
 Bot Name: ${BOTNAME}`
-      
     ];
 
-    // ================= MAIN RANDOM SYSTEM =================
     const randomLoadingSet = loadingSets[Math.floor(Math.random() * loadingSets.length)];
     const randomGifUrl = gifs[Math.floor(Math.random() * gifs.length)];
     const randomText = textFrames[Math.floor(Math.random() * textFrames.length)];
 
-    // Loading Animation
     const msg = await message.reply(randomLoadingSet[0]);
 
     for (let i = 1; i < randomLoadingSet.length; i++) {
@@ -185,7 +150,6 @@ Bot Name: ${BOTNAME}`
     await new Promise(r => setTimeout(r, 800));
     api.unsendMessage(msg.messageID);
 
-    // Download & Send GIF with Text
     const cacheFolder = path.join(__dirname, "cache");
     if (!fs.existsSync(cacheFolder)) fs.mkdirSync(cacheFolder, { recursive: true });
 
@@ -212,13 +176,19 @@ Bot Name: ${BOTNAME}`
     if (!event.body) return;
 
     const body = event.body.toLowerCase().trim();
+    const botPrefix = global.GoatBot.config.prefix || "!";
 
-    if (body === "prefix") {
-      return this.onStart({ message, event, api, args: [] });
+    // শুধু "." দিলে simple reply
+    if (body === botPrefix) {
+      return message.reply("🎀\nιт'ѕ ʝυѕт му ρяєƒιχ");
     }
 
-    if (body.startsWith("prefix set")) {
-      const args = body.split(" ");
+    if (body === "prefix" || body === botPrefix + "prefix") {
+      return this.onStart({ message, event, api, args: ["info"] });
+    }
+
+    if (body.startsWith("prefix set") || body.startsWith(botPrefix + "prefix set")) {
+      const args = body.split(" ").slice(1);
       return this.onStart({ message, event, api, args });
     }
   }
