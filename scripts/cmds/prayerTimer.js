@@ -5,10 +5,10 @@ const path = require("path");
 
 module.exports.config = {
   name: "prayerTimer",
-  version: "1.1",
+  version: "2.0-fixed",
   role: 0,
-  author: "Hridoy", // ক্রেডিট চেঞ্জ করলে ফাইল অফ হয়ে যাবে 
-  description: "নামাজ টাইমে ভিডিও + Random Dua সহ মেসেজ যাবে",
+  author: "Hridoy",
+  description: "নামাজ টাইমে ভিডিও + Random Dua সহ মেসেজ যাবে (No Duplicate)",
   category: "Utility",
   countDown: 5,
 };
@@ -21,12 +21,13 @@ if (module.exports.config.author !== "Hridoy") {
 
 module.exports.onLoad = async function ({ api }) {
 
+  // 🔥 24h format use (IMPORTANT FIX)
   const prayerTimes = {
-    "05:00 AM": "🕌 ফজরের নামাজের সময় হয়েছে",
-    "01:15 PM": "🕌 যোহরের নামাজের সময় হয়েছে",
-    "04:30 PM": "🕌 আসরের নামাজের সময় হয়েছে",
-    "06:15 PM": "🕌 মাগরিবের নামাজের সময় হয়েছে",
-    "08:00 PM": "🕌 এশার নামাজের সময় হয়েছে"
+    "05:00": "🕌 ফজরের নামাজের সময় হয়েছে",
+    "13:15": "🕌 যোহরের নামাজের সময় হয়েছে",
+    "16:30": "🕌 আসরের নামাজের সময় হয়েছে",
+    "18:15": "🕌 মাগরিবের নামাজের সময় হয়েছে",
+    "20:00": "🕌 এশার নামাজের সময় হয়েছে"
   };
 
   const duas = [
@@ -37,16 +38,18 @@ module.exports.onLoad = async function ({ api }) {
     "🤲 اللّهُمَّ ارْزُقْنِي حَلَالًا طَيِّبًا\nহে আল্লাহ, আমাকে হালাল রিযিক দান করুন"
   ];
 
-  const sentToday = {};
+  let lastSent = ""; // 🔥 main fix
 
-  console.log("🕌 Prayer Timer Loaded with Dua System...");
+  console.log("🕌 Prayer Timer Loaded (No Duplicate)...");
 
   const checkPrayer = async () => {
-    const now = moment().tz("Asia/Dhaka").format("hh:mm A");
 
-    if (prayerTimes[now] && !sentToday[now]) {
+    const now = moment().tz("Asia/Dhaka").format("HH:mm");
 
-      sentToday[now] = true;
+    // 🔥 Only run if new time (main fix)
+    if (prayerTimes[now] && lastSent !== now) {
+
+      lastSent = now;
 
       const timeNow = moment().tz("Asia/Dhaka").format("hh:mm A");
       const dateNow = moment().tz("Asia/Dhaka").format("DD-MM-YYYY");
@@ -75,12 +78,11 @@ ${randomDua}
         const cacheDir = path.join(__dirname, "cache");
         const filePath = path.join(cacheDir, "azan.mp4");
 
-        // 📁 cache folder create
         if (!fs.existsSync(cacheDir)) {
           fs.mkdirSync(cacheDir);
         }
 
-        // 🎥 download if not exists
+        // 🎥 download only once
         if (!fs.existsSync(filePath)) {
           const res = await axios({
             url: "https://files.catbox.moe/gr8zqw.mp4",
@@ -110,13 +112,13 @@ ${randomDua}
       }
     }
 
-    // 🔄 reset
-    if (moment().format("HH:mm") === "00:00") {
-      for (let key in sentToday) delete sentToday[key];
+    // 🔄 reset everyday
+    if (moment().tz("Asia/Dhaka").format("HH:mm") === "00:00") {
+      lastSent = "";
     }
   };
 
-  setInterval(checkPrayer, 20000); // একটু বেশি accurate
+  setInterval(checkPrayer, 15000); // fast but safe
 };
 
 module.exports.onStart = () => {};
